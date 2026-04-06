@@ -439,6 +439,13 @@ total:total
 
 const data = await res.json()
 
+console.log("Response Midtrans:",data)
+
+if(!data.token){
+alert("Token pembayaran tidak diterima")
+return
+}
+
 snap.pay(data.token)
 
 }
