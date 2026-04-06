@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atelier Apex Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+
+
+        <script src="https://app.sandbox.midtrans.com/snap/snap.js"
+data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
+
+
+    <style>
+        body {
+            font-family: Inter, sans-serif;
+            background: #f8fafc;
+            color: #0f172a
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif
+        }
+
+        .menu-card,
+        .table-btn {
+            transition: .25s
+        }
+
+        .menu-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .06)
+        }
+
+        .table-btn:hover {
+            transform: scale(1.03)
+        }
+
+        .drawer {
+            transition: transform .35s cubic-bezier(.16, 1, .3, 1)
+        }
+
+        .hide-scroll::-webkit-scrollbar {
+            display: none
+        }
+    </style>
+</head>
+
+<body class="h-screen overflow-hidden">
+
+    <!-- table select overlay -->
+    <div id="tableOverlay" class="fixed inset-0 z-[9999] bg-slate-50 flex flex-col items-center justify-center p-6">
+        <h1 class="serif text-4xl font-bold">Atelier Apex</h1>
+        <p class="mt-2 text-xs uppercase tracking-[0.35em] text-blue-600 font-bold">Pilih Meja</p>
+        <div id="tableGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-10 max-w-3xl"></div>
+    </div>
+
+    <div class="flex h-screen">
+        <aside class="hidden lg:flex w-72 bg-slate-100 border-r border-slate-200 p-8 flex-col">
+            <h2 class="serif text-3xl font-bold">Atelier.</h2>
+
+            <div id="deskInfo"
+     class="mt-3 flex items-center justify-between bg-blue-600 text-white 
+     px-4 py-3 rounded-xl shadow-sm">
+
+    <span class="text-xs uppercase tracking-widest opacity-80">
+        Meja
+    </span>
+
+    <span class="text-lg font-bold">
+        --
+    </span>
+
+</div>
+
+            <input id="searchDesktop" class="mt-6 px-4 py-3 rounded-2xl border border-slate-200 text-sm"
+                placeholder="Cari menu...">
+            <div id="desktopNav" class="mt-6 space-y-2"></div>
+            <div class="mt-auto rounded-3xl bg-white p-5 border border-slate-200 shadow-sm text-sm">
+    
+    <p class="font-semibold text-slate-700">
+        Status Sistem
+    </p>
+
+    <p class="mt-1 text-slate-600">
+        Kasir aktif dan siap menerima pesanan.
+    </p>
+
+    <p class="text-xs mt-2 text-slate-400">
+        Sinkronisasi menu & stok berjalan normal.
+    </p>
+
+</div>
+
+        </aside>
+
+
+
+
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-slate-100 p-5 lg:p-8 flex justify-between items-center">
+                <div>
+                   <div class="flex flex-col gap-2">
+
+    <h2 id="categoryTitle" class="serif text-2xl lg:text-3xl font-bold">
+        Coffee
+    </h2>
+
+    <div id="deskInfoMobile"
+         class="lg:hidden flex items-center justify-between bg-blue-600 text-white
+         px-3 py-2 rounded-lg shadow-sm w-fit min-w-[110px]">
+
+        <span class="text-[10px] uppercase tracking-widest opacity-80">
+            Meja
+        </span>
+
+        <span id="deskNumberMobile" class="text-sm font-bold">
+            --
+        </span>
+
+    </div>
+
+</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input id="searchMobile"
+                        class="lg:hidden px-4 py-3 rounded-2xl border border-slate-200 text-sm w-40"
+                        placeholder="Cari...">
+                    <button onclick="toggleDrawer(true)"
+                        class="relative p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span id="cartBadge"
+                            class="hidden absolute -top-2 -right-2 w-6 h-6 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="mobileNav" class="lg:hidden flex gap-2 overflow-x-auto p-4 bg-slate-100 hide-scroll"></div>
+            <section id="menuGrid"
+                class="flex-1 overflow-y-auto p-5 lg:p-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 hide-scroll">
+            </section>
+        </main>
+    </div>
+
+    <div id="overlay" onclick="toggleDrawer(false)" class="hidden fixed inset-0 bg-slate-900/40 z-40"></div>
+    <aside id="drawer"
+        class="drawer translate-x-full fixed right-0 top-0 h-full w-full sm:w-[440px] bg-white z-50 shadow-2xl flex flex-col">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h3 class="serif text-2xl font-bold">Checkout</h3>
+                <p class="text-xs text-slate-400">Review pesanan</p>
+            </div>
+            <button onclick="toggleDrawer(false)"><i data-lucide="x"></i></button>
+        </div>
+
+        <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-4 hide-scroll"></div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
+            <div class="rounded-2xl bg-white p-3 border border-slate-100 text-xs space-y-1.5">
+                <div class="flex justify-between"><span>Subtotal</span><span id="subtotal">IDR 0</span></div>
+                <div class="flex justify-between"><span>Service 5%</span><span id="service">IDR 0</span></div>
+                <div class="flex justify-between"><span>PPN 10%</span><span id="tax">IDR 0</span></div>
+                <div class="flex justify-between font-bold text-blue-600 text-sm border-t pt-2"><span>Total</span><span
+                        id="grand">IDR 0</span></div>
+            </div>
+            <button onclick="checkout()"
+                class="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-sm">Checkout Sekarang</button>
+        </div>
+    </aside>
+
+    <script>
+        const categories = ['Coffee', 'Tea', 'Pastry', 'Dining'];
+
+        const CATEGORY_ICONS = {
+    Coffee: "coffee",
+    Tea: "cup-soda",
+    Pastry: "cake-slice",
+    Dining: "utensils"
+};
+
+        const DB_MENU = [
+            { id: 1, category: 'Coffee', name: 'Manuka Honey Latte', price: 62000, img: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&q=80' },
+            { id: 2, category: 'Coffee', name: 'Signature Cold Brew', price: 58000, img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500&q=80' },
+            { id: 3, category: 'Coffee', name: 'Spanish Latte', price: 54000, img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&q=80' },
+            { id: 4, category: 'Coffee', name: 'Americano', price: 42000, img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80' },
+            { id: 5, category: 'Coffee', name: 'Cappuccino', price: 50000, img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80' },
+            { id: 6, category: 'Coffee', name: 'Mocha', price: 52000, img: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=500&q=80' },
+            { id: 7, category: 'Coffee', name: 'Flat White', price: 49000, img: 'https://images.unsplash.com/photo-1494314671902-399b18174975?w=500&q=80' },
+            { id: 8, category: 'Coffee', name: 'Vanilla Latte', price: 56000, img: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500&q=80' },
+            { id: 9, category: 'Coffee', name: 'Hazelnut Latte', price: 57000, img: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=500&q=80' },
+            { id: 10, category: 'Coffee', name: 'Affogato', price: 60000, img: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?w=500&q=80' },
+            { id: 11, category: 'Tea', name: 'Imperial Jasmine', price: 48000, img: 'https://images.unsplash.com/photo-1594631252845-29fc458631b6?w=500&q=80' },
+            { id: 12, category: 'Tea', name: 'Earl Grey', price: 45000, img: 'https://images.unsplash.com/photo-1507914372368-b2b085b925a1?w=500&q=80' },
+            { id: 13, category: 'Tea', name: 'Chamomile', price: 43000, img: 'https://images.unsplash.com/photo-1544787210-7f47ccb76574?w=500&q=80' },
+            { id: 14, category: 'Tea', name: 'Matcha', price: 55000, img: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=500&q=80' },
+            { id: 15, category: 'Tea', name: 'Lemon Tea', price: 40000, img: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500&q=80' },
+            { id: 16, category: 'Tea', name: 'Peach Tea', price: 42000, img: 'https://images.unsplash.com/photo-1464306076886-da185f6a9d05?w=500&q=80' },
+            { id: 17, category: 'Tea', name: 'Lychee Tea', price: 44000, img: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=500&q=80' },
+            { id: 18, category: 'Tea', name: 'Mint Tea', price: 41000, img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80' },
+            { id: 19, category: 'Tea', name: 'Milk Tea', price: 46000, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&q=80' },
+            { id: 20, category: 'Tea', name: 'Thai Tea', price: 47000, img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&q=80' },
+            { id: 21, category: 'Pastry', name: 'Butter Croissant', price: 38000, img: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&q=80' },
+            { id: 22, category: 'Pastry', name: 'Chocolate Croissant', price: 42000, img: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80' },
+            { id: 23, category: 'Pastry', name: 'Almond Danish', price: 45000, img: 'https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=500&q=80' },
+            { id: 24, category: 'Pastry', name: 'Cinnamon Roll', price: 43000, img: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=500&q=80' },
+            { id: 25, category: 'Pastry', name: 'Blueberry Muffin', price: 39000, img: 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=500&q=80' },
+            { id: 26, category: 'Pastry', name: 'Cheese Cake', price: 48000, img: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&q=80' },
+            { id: 27, category: 'Pastry', name: 'Banana Bread', price: 37000, img: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=500&q=80' },
+            { id: 28, category: 'Pastry', name: 'Red Velvet', price: 50000, img: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=500&q=80' },
+            { id: 29, category: 'Pastry', name: 'Macaron Box', price: 52000, img: 'https://images.unsplash.com/photo-1558326567-98ae2405596b?w=500&q=80' },
+            { id: 30, category: 'Pastry', name: 'Tiramisu', price: 55000, img: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=500&q=80' },
+            { id: 31, category: 'Dining', name: 'Salmon Grill', price: 145000, img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=500&q=80' },
+            { id: 32, category: 'Dining', name: 'Beef Steak', price: 175000, img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80' },
+            { id: 33, category: 'Dining', name: 'Chicken Katsu', price: 98000, img: 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=500&q=80' },
+            { id: 34, category: 'Dining', name: 'Creamy Pasta', price: 92000, img: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=500&q=80' },
+            { id: 35, category: 'Dining', name: 'Burger Deluxe', price: 89000, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80' },
+            { id: 36, category: 'Dining', name: 'Fish & Chips', price: 102000, img: 'https://images.unsplash.com/photo-1579208575657-c595a05383b7?w=500&q=80' },
+            { id: 37, category: 'Dining', name: 'Caesar Salad', price: 76000, img: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=500&q=80' },
+            { id: 38, category: 'Dining', name: 'Sushi Platter', price: 132000, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&q=80' },
+            { id: 39, category: 'Dining', name: 'Ramen Bowl', price: 85000, img: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=500&q=80' },
+            { id: 40, category: 'Dining', name: 'Pizza Slice', price: 95000, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80' }
+        ];
+
+        let activeCategory = 'Coffee';
+        let cart = JSON.parse(localStorage.getItem('atelier_cart') || '[]');
+        let meja = null;
+
+        function initTables() {
+            const grid = document.getElementById('tableGrid');
+            let html = '';
+            for (let i = 1; i <= 15; i++) {
+                html += `<button onclick="selectTable(${i}, this)" class="table-btn bg-white border border-slate-200 rounded-3xl p-6 font-bold text-lg">${String(i).padStart(2, '0')}</button>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        function selectTable(num, el) {
+            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+            el.classList.add('bg-blue-600', 'text-white');
+            meja = num;
+            setTimeout(startOrder, 180);
+        }
+
+        function startOrder() {
+            document.getElementById('tableOverlay').classList.add('hidden');
+            document.getElementById('deskInfo').textContent = 'MEJA ' + meja;
+            document.getElementById('deskInfoMobile').textContent = 'MEJA ' + meja;
+        }
+
+        function renderNav() {
+    const d = document.getElementById('desktopNav');
+    const m = document.getElementById('mobileNav');
+
+    d.innerHTML = '';
+    m.innerHTML = '';
+
+    categories.forEach(cat => {
+
+        const active = cat === activeCategory;
+        const icon = CATEGORY_ICONS[cat];
+
+        d.innerHTML += `
+        <button onclick="setCategory('${cat}')" 
+        class="w-full flex items-center gap-3 px-4 py-4 rounded-2xl font-semibold
+        ${active ? 'bg-white text-blue-600 shadow' : 'text-slate-600'}">
+
+        <i data-lucide="${icon}" class="w-4 h-4"></i>
+        ${cat}
+
+        </button>
+        `;
+
+        m.innerHTML += `
+        <button onclick="setCategory('${cat}')" 
+        class="flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap
+        ${active ? 'bg-blue-600 text-white' : 'bg-white'}">
+
+        <i data-lucide="${icon}" class="w-4 h-4"></i>
+        ${cat}
+
+        </button>
+        `;
+    });
+
+    lucide.createIcons();
+}
+
+        function setCategory(cat) { activeCategory = cat; renderNav(); renderMenu(); }
+
+        function getSearch() {
+            return (document.getElementById('searchDesktop')?.value || document.getElementById('searchMobile')?.value || '').toLowerCase();
+        }
+
+        function renderMenu() {
+            const q = getSearch();
+            const items = DB_MENU.filter(i => i.category === activeCategory && i.name.toLowerCase().includes(q));
+            const grid = document.getElementById('menuGrid');
+            document.getElementById('categoryTitle').textContent = activeCategory;
+            grid.innerHTML = items.map(item => `<div class='menu-card bg-white rounded-3xl p-4 border border-slate-100'>
+    <img src='${item.img}' class='w-full aspect-[16/10] object-cover rounded-2xl'>
+    <h4 class='font-bold mt-4'>${item.name}</h4>
+    <p class='text-blue-600 text-sm font-bold mt-1'>IDR ${item.price.toLocaleString('id-ID')}</p>
+    <div class='mt-4 flex items-center justify-between gap-3'>
+      <div class='flex items-center gap-2'>
+        <button onclick='changeMenuQty(${item.id},-1)' class='w-9 h-9 rounded-xl bg-slate-100 font-bold'>-</button>
+        <span id='menu-qty-${item.id}' class='min-w-[24px] text-center font-bold text-sm'>0</span>
+        <button onclick='changeMenuQty(${item.id},1)' class='w-9 h-9 rounded-xl bg-slate-100 font-bold'>+</button>
+      </div>
+      <button onclick='addToCart(${item.id})' class='flex-1 py-3 rounded-2xl bg-slate-900 text-white text-sm font-semibold'>Tambah</button>
+    </div>
+  </div>`).join('') || `<div class='text-slate-400'>Menu tidak ditemukan.</div>`;
+        }
+
+        function changeMenuQty(id, delta) {
+            const el = document.getElementById(`menu-qty-${id}`);
+            if (!el) return;
+            const next = Math.max(0, (parseInt(el.textContent) || 0) + delta);
+            el.textContent = next;
+        }
+
+        function addToCart(id) {
+            const item = DB_MENU.find(x => x.id === id);
+            const qty = parseInt(document.getElementById(`menu-qty-${id}`)?.textContent || '0');
+            if (qty <= 0) return;
+            const ex = cart.find(x => x.id === id);
+            if (ex) ex.qty += qty;
+            else cart.push({ ...item, qty });
+            const qtyEl = document.getElementById(`menu-qty-${id}`);
+            if (qtyEl) qtyEl.textContent = '0';
+            persist();
+            updateCart();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(x => x.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) cart = cart.filter(x => x.id !== id);
+            persist();
+            updateCart();
+        }
+
+        function removeItem(id) {
+            cart = cart.filter(x => x.id !== id);
+            persist();
+            updateCart();
+        }
+
+        function persist() {
+            localStorage.setItem('atelier_cart', JSON.stringify(cart));
+        }
+
+        function updateCart() {
+            const wrap = document.getElementById('cartItems');
+            const count = cart.reduce((a, b) => a + b.qty, 0);
+            const subtotal = cart.reduce((a, b) => a + b.price * b.qty, 0);
+            const service = Math.round(subtotal * 0.05);
+            const tax = Math.round(subtotal * 0.10);
+            const total = subtotal + service + tax;
+
+            document.getElementById('cartBadge').textContent = count;
+            document.getElementById('cartBadge').classList.toggle('hidden', count === 0);
+
+            wrap.innerHTML = cart.length ? cart.map(i => `<div class='flex gap-3 items-center border border-slate-100 rounded-2xl p-3'>
+    <img src='${i.img}' class='w-16 h-16 rounded-2xl object-cover'>
+    <div class='flex-1 min-w-0'>
+      <p class='font-semibold text-sm'>${i.name}</p>
+      <div class='flex items-center gap-3 mt-2'>
+        <button onclick='changeQty(${i.id},-1)' class='px-2 py-1 bg-slate-100 rounded'>-</button>
+        <span class='text-sm font-bold'>${i.qty}</span>
+        <button onclick='changeQty(${i.id},1)' class='px-2 py-1 bg-slate-100 rounded'>+</button>
+      </div>
+    </div>
+    <div class='flex items-center gap-2 shrink-0'>
+      <p class='font-bold text-xs min-w-[90px] text-right'>IDR ${(i.price * i.qty).toLocaleString('id-ID')}</p>
+      <button onclick='removeItem(${i.id})' class='flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl shadow-sm'>
+        <i data-lucide='trash-2' class='w-4 h-4'></i>
+      </button>
+    </div>
+  </div>`).join('') : `<div class='text-center text-slate-400 py-10'>Keranjang masih kosong</div>`;
+
+            document.getElementById('subtotal').textContent = 'IDR ' + subtotal.toLocaleString('id-ID');
+            document.getElementById('service').textContent = 'IDR ' + service.toLocaleString('id-ID');
+            document.getElementById('tax').textContent = 'IDR ' + tax.toLocaleString('id-ID');
+            document.getElementById('grand').textContent = 'IDR ' + total.toLocaleString('id-ID');
+
+            lucide.createIcons();
+        }
+
+        function toggleDrawer(open) {
+            document.getElementById('drawer').classList.toggle('translate-x-full', !open);
+            document.getElementById('overlay').classList.toggle('hidden', !open);
+        }
+
+
+
+        document.getElementById('searchDesktop').addEventListener('input', renderMenu);
+        document.getElementById('searchMobile').addEventListener('input', renderMenu);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('tableOverlay');
+            if (overlay) overlay.classList.remove('hidden');
+            initTables();
+            renderNav();
+            renderMenu();
+            updateCart();
+            lucide.createIcons();
+            const menuGrid = document.getElementById('menuGrid');
+            const backBtn = document.getElementById('backToTop');
+            menuGrid.addEventListener('scroll', () => {
+                backBtn.classList.toggle('hidden', menuGrid.scrollTop < 300);
+            });
+        });
+
+
+        
+        async function checkout(){
+
+const subtotal = cart.reduce((a,b)=>a+b.price*b.qty,0)
+const service = Math.round(subtotal*0.05)
+const tax = Math.round(subtotal*0.10)
+const total = subtotal+service+tax
+
+const res = await fetch("/.netlify/functions/createTransaction",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+items:cart,
+total:total
+})
+})
+
+const data = await res.json()
+
+snap.pay(data.token)
+
+}
+
+
+    </script>
+    <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+        class="fixed bottom-6 right-6 z-30 hidden w-12 h-12 rounded-full bg-sky-100/90 backdrop-blur border border-sky-200 shadow-xl hover:shadow-2xl hover:bg-sky-200 flex items-center justify-center transition-all duration-300">
+        <i data-lucide="arrow-up" class="w-5 h-5 text-sky-700"></i>
+    </button>
+</body>
+
+</html>
