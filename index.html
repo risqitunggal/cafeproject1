@@ -11,6 +11,8 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
         rel="stylesheet">
 
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
         <script src="https://app.sandbox.midtrans.com/snap/snap.js"
 data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
@@ -183,6 +185,56 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
     Dining: "utensils"
 };
 
+
+
+// Ganti dengan data yang Anda salin di Langkah 1
+const firebaseConfig = {
+  apiKey: "AIzaSyCQuohmYq7Q_eR7OpfjrVgdRitOgqcX2GY",
+  authDomain: "cafe-order-system-f7024.firebaseapp.com",
+  projectId: "cafe-order-system-f7024",
+  storageBucket: "cafe-order-system-f7024.firebasestorage.app",
+  messagingSenderId: "903604964032",
+  appId: "1:903604964032:web:ab5c8efd4acf36b4943b25",
+  measurementId: "G-7D78K0TPC1"
+};
+
+// Inisialisasi Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Fungsi untuk memantau status meja secara live
+function watchTables() {
+    const tableRef = db.ref('tables');
+    tableRef.on('value', (snapshot) => {
+        const tableData = snapshot.val() || {};
+        renderTableGrid(tableData);
+    });
+}
+
+// Fungsi render meja yang sudah dimodifikasi
+function renderTableGrid(tableData) {
+    const grid = document.getElementById('tableGrid');
+    let html = '';
+    for (let i = 1; i <= 15; i++) {
+        const status = tableData[i] ? tableData[i].status : 'available';
+        const isOccupied = status === 'occupied';
+        
+        html += `
+            <button 
+                onclick="${isOccupied ? '' : `selectTable(${i}, this)`}" 
+                class="table-btn relative border rounded-3xl p-6 font-bold text-lg transition-all
+                ${isOccupied 
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+                    : 'bg-white border-slate-200 hover:border-blue-500 text-slate-700 shadow-sm'}"
+                ${isOccupied ? 'disabled' : ''}>
+                ${String(i).padStart(2, '0')}
+                ${isOccupied ? '<span class="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>' : ''}
+            </button>`;
+    }
+    grid.innerHTML = html;
+}
+
+
         const DB_MENU = [
             { id: 1, category: 'Coffee', name: 'Manuka Honey Latte', price: 62000, img: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&q=80' },
             { id: 2, category: 'Coffee', name: 'Signature Cold Brew', price: 58000, img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500&q=80' },
@@ -239,18 +291,31 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
             grid.innerHTML = html;
         }
 
-        function selectTable(num, el) {
-            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
-            el.classList.add('bg-blue-600', 'text-white');
-            meja = num;
-            setTimeout(startOrder, 180);
-        }
+        async function selectTable(num, el) {
+    try {
+        // Tandai meja sebagai terpakai di Firebase
+        await db.ref('tables/' + num).set({
+            status: 'occupied',
+            lastSelected: Date.now()
+        });
 
-        function startOrder() {
-            document.getElementById('tableOverlay').classList.add('hidden');
-            document.getElementById('deskInfo').textContent = 'MEJA ' + meja;
-            document.getElementById('deskInfoMobile').textContent = 'MEJA ' + meja;
-        }
+        meja = num;
+        document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+        el.classList.add('bg-blue-600', 'text-white');
+        
+        setTimeout(startOrder, 180);
+    } catch (error) {
+        console.error("Firebase Error:", error);
+        alert("Gagal mengunci meja. Pastikan Rules di Firebase sudah Public.");
+    }
+}
+
+function startOrder() {
+    document.getElementById('tableOverlay').classList.add('hidden');
+    // Update tampilan nomor meja di sidebar & header
+    document.querySelector('#deskInfo span:last-child').textContent = meja;
+    document.getElementById('deskNumberMobile').textContent = meja;
+}
 
         function renderNav() {
     const d = document.getElementById('desktopNav');
@@ -403,19 +468,16 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
         document.getElementById('searchMobile').addEventListener('input', renderMenu);
 
         document.addEventListener('DOMContentLoaded', () => {
-            const overlay = document.getElementById('tableOverlay');
-            if (overlay) overlay.classList.remove('hidden');
-            initTables();
-            renderNav();
-            renderMenu();
-            updateCart();
-            lucide.createIcons();
-            const menuGrid = document.getElementById('menuGrid');
-            const backBtn = document.getElementById('backToTop');
-            menuGrid.addEventListener('scroll', () => {
-                backBtn.classList.toggle('hidden', menuGrid.scrollTop < 300);
-            });
-        });
+    const overlay = document.getElementById('tableOverlay');
+    if (overlay) overlay.classList.remove('hidden');
+    
+    watchTables(); // Ganti initTables() lama dengan ini
+    renderNav();
+    renderMenu();
+    updateCart();
+    lucide.createIcons();
+});
+        
 
 
         
@@ -452,6 +514,10 @@ snap.pay(data.token)
 
 
     </script>
+
+
+
+
     <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
         class="fixed bottom-6 right-6 z-30 hidden w-12 h-12 rounded-full bg-sky-100/90 backdrop-blur border border-sky-200 shadow-xl hover:shadow-2xl hover:bg-sky-200 flex items-center justify-center transition-all duration-300">
         <i data-lucide="arrow-up" class="w-5 h-5 text-sky-700"></i>
