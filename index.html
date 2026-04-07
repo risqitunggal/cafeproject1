@@ -149,6 +149,8 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
         </main>
     </div>
 
+
+    
     <div id="overlay" onclick="toggleDrawer(false)" class="hidden fixed inset-0 bg-slate-900/40 z-40"></div>
     <aside id="drawer"
         class="drawer translate-x-full fixed right-0 top-0 h-full w-full sm:w-[440px] bg-white z-50 shadow-2xl flex flex-col">
@@ -161,6 +163,14 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
         </div>
 
         <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-4 hide-scroll"></div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
+    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Nama Pemesan *</label>
+    <input type="text" id="customerName" placeholder="Masukkan nama Anda..." 
+        class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+        required>
+</div>
+<div class="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
 
         <div class="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
             <div class="rounded-2xl bg-white p-3 border border-slate-100 text-xs space-y-1.5">
@@ -481,35 +491,67 @@ function startOrder() {
 
 
         
-        async function checkout(){
+        async function checkout() {
+    // 1. Ambil nilai input nama (ID customerName harus ada di HTML)
+    const nameInput = document.getElementById('customerName')?.value.trim();
+    
+    // 2. Validasi Keranjang
+    if (cart.length === 0) {
+        return alert("Keranjang masih kosong");
+    }
 
-const subtotal = cart.reduce((a,b)=>a+b.price*b.qty,0)
-const service = Math.round(subtotal*0.05)
-const tax = Math.round(subtotal*0.10)
-const total = subtotal+service+tax
+    // 3. Validasi Nama Wajib Isi
+    if (!nameInput) {
+        alert("Mohon masukkan nama Anda sebelum melakukan checkout.");
+        const inputEl = document.getElementById('customerName');
+        if (inputEl) inputEl.focus();
+        return;
+    }
 
-const res = await fetch("/.netlify/functions/createTransaction",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-items:cart,
-total:total
-})
-})
+    const subtotal = cart.reduce((a, b) => a + b.price * b.qty, 0);
+    const service = Math.round(subtotal * 0.05);
+    const tax = Math.round(subtotal * 0.10);
+    const total = subtotal + service + tax;
 
-const data = await res.json()
+    // --- BAGIAN SINKRONISASI KE FIREBASE ---
+    try {
+        await db.ref('tables/' + meja).update({
+            status: 'occupied',
+            orderDetail: {
+                items: cart,
+                subtotal: subtotal,
+                total: total,
+                // Menggunakan format waktu Indonesia agar seragam
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), 
+                customerName: nameInput // Menyimpan nama asli dari input
+            }
+        });
+    } catch (err) {
+        console.error("Gagal sinkron ke Firebase", err);
+    }
+    // --- END SINKRONISASI ---
 
-console.log("Response Midtrans:",data)
+    // 4. Lanjut ke proses Midtrans
+    try {
+        const res = await fetch("/.netlify/functions/createTransaction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                items: cart, 
+                total: total,
+                customerName: nameInput // Mengirim nama ke backend jika diperlukan
+            })
+        });
 
-if(!data.token){
-alert("Token pembayaran tidak diterima")
-return
-}
-
-snap.pay(data.token)
-
+        const data = await res.json();
+        if (!data.token) return alert("Token pembayaran tidak diterima");
+        
+        // Membuka jendela pembayaran Midtrans
+        snap.pay(data.token);
+    } catch (error) {
+        console.error("Error checkout:", error);
+        alert("Terjadi kesalahan saat memproses pesanan.");
+    }
 }
 
 
