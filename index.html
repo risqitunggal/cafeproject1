@@ -547,7 +547,7 @@ function startOrder() {
         if (!data.token) return alert("Token pembayaran tidak diterima");
         
         
-        
+
         // Membuka jendela pembayaran Midtrans dengan Callback
         snap.pay(data.token, {
             onSuccess: function(result) {
@@ -572,24 +572,41 @@ function startOrder() {
     }
 }
 
+
+
 // FUNGSI BARU UNTUK RESET TAMPILAN KE AWAL
 function resetToInitialState() {
-    // 1. Kosongkan keranjang di aplikasi & LocalStorage
-    cart = [];
-    persist();
-    updateCart();
+    // 1. Kosongkan array keranjang di memori
+    cart = []; 
+    
+    // 2. Timpa data keranjang di LocalStorage dengan array kosong
+    persist(); 
 
-    // 2. Kosongkan input nama
+    // 3. Update tampilan keranjang agar menjadi "Keranjang masih kosong"
+    updateCart(); 
+
+    // 4. Kosongkan input nama pemesan
     const nameInput = document.getElementById('customerName');
     if (nameInput) nameInput.value = '';
 
-    // 3. Reset variabel meja & tampilkan kembali Overlay Pilih Meja
+    // 5. Tutup sidebar Checkout jika sedang terbuka
+    toggleDrawer(false); 
+
+    // 6. Reset variabel meja & tampilkan kembali Overlay Pilih Meja
     meja = null;
     document.getElementById('tableOverlay').classList.remove('hidden');
 
-    // 4. Reset teks info meja di sidebar
-    document.querySelector('#deskInfo span:last-child').textContent = '--';
-    document.getElementById('deskNumberMobile').textContent = '--';
+    // 7. Reset indikator nomor meja di sidebar dan header mobile
+    const deskInfoSpan = document.querySelector('#deskInfo span:last-child');
+    if (deskInfoSpan) deskInfoSpan.textContent = '--';
+    
+    const deskMobile = document.getElementById('deskNumberMobile');
+    if (deskMobile) deskMobile.textContent = '--';
+
+    // 8. (Opsional) Reset tampilan angka Qty di grid menu menjadi 0
+    document.querySelectorAll('[id^="menu-qty-"]').forEach(el => el.textContent = '0');
+    
+    console.log("Sistem telah di-reset ke kondisi awal.");
 }
 
 
