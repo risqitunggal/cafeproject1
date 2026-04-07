@@ -546,12 +546,50 @@ function startOrder() {
         const data = await res.json();
         if (!data.token) return alert("Token pembayaran tidak diterima");
         
-        // Membuka jendela pembayaran Midtrans
-        snap.pay(data.token);
+        
+        
+        // Membuka jendela pembayaran Midtrans dengan Callback
+        snap.pay(data.token, {
+            onSuccess: function(result) {
+                alert("Pembayaran Berhasil! Pesanan Anda sedang diproses.");
+                resetToInitialState();
+            },
+            onPending: function(result) {
+                alert("Menunggu pembayaran Anda.");
+                resetToInitialState();
+            },
+            onError: function(result) {
+                alert("Pembayaran gagal, silakan coba lagi.");
+            },
+            onClose: function() {
+                // Opsional: Jika user menutup pop-up tanpa bayar
+                console.log('Customer closed the popup without finishing the payment');
+            }
+        });
     } catch (error) {
         console.error("Error checkout:", error);
         alert("Terjadi kesalahan saat memproses pesanan.");
     }
+}
+
+// FUNGSI BARU UNTUK RESET TAMPILAN KE AWAL
+function resetToInitialState() {
+    // 1. Kosongkan keranjang di aplikasi & LocalStorage
+    cart = [];
+    persist();
+    updateCart();
+
+    // 2. Kosongkan input nama
+    const nameInput = document.getElementById('customerName');
+    if (nameInput) nameInput.value = '';
+
+    // 3. Reset variabel meja & tampilkan kembali Overlay Pilih Meja
+    meja = null;
+    document.getElementById('tableOverlay').classList.remove('hidden');
+
+    // 4. Reset teks info meja di sidebar
+    document.querySelector('#deskInfo span:last-child').textContent = '--';
+    document.getElementById('deskNumberMobile').textContent = '--';
 }
 
 
