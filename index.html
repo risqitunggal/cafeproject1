@@ -4,266 +4,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Atelier Apex - Order from Table</title>
+    <title>Atelier Apex | Luxury Dining Experience</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
         rel="stylesheet">
+
     <style>
+        :root {
+            --accent: #2563eb;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcfcfd;
+            scroll-behavior: smooth;
         }
 
         .serif {
             font-family: 'Playfair Display', serif;
         }
 
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
 
-        .active-category {
-            background: #2563eb;
-            color: white;
+        .menu-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .cat-btn.active {
+            background: #1e293b;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .sticky-cat {
+            position: sticky;
+            top: 72px;
+            z-index: 40;
+        }
+
+        @media (min-width: 1024px) {
+            .sticky-cat {
+                top: 88px;
+            }
+        }
+
+        /* Sidebar Transition */
+        #mobileSidebar {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-overlay {
+            transition: opacity 0.4s ease;
+        }
+
+
+        /* Tambahkan di dalam tag <style> */
+.no-scroll {
+    overflow: hidden;
+    height: 100vh;
+}
+
+
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900 pb-24">
+<body class="text-slate-900 leading-relaxed">
 
-    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 p-4">
-        <div class="flex justify-between items-center">
+    <nav class="sticky top-0 z-50 glass border-b border-slate-100 p-4 lg:px-12 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar(true)"
+                class="lg:hidden p-2.5 bg-slate-100 rounded-full active:scale-90 transition-transform">
+                <i data-lucide="menu" class="w-5 h-5 text-slate-700"></i>
+            </button>
             <div>
-                <h1 class="serif text-xl font-bold">Atelier <span class="text-blue-600">Apex</span></h1>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" id="displayMeja">Meja --</p>
+                <h1 class="serif text-2xl font-bold tracking-tight text-slate-900 italic leading-none">Atelier <span
+                        class="text-blue-600">Apex</span></h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]" id="displayMeja">Meja --
+                    </p>
+                </div>
             </div>
-            <div class="bg-blue-50 px-3 py-1 rounded-full">
-                <span class="text-[10px] font-bold text-blue-600 uppercase">Self-Service</span>
+        </div>
+
+        <div class="hidden lg:flex items-center gap-10 text-xs font-bold uppercase tracking-widest text-slate-400">
+            <a href="#" class="text-slate-900 border-b-2 border-blue-600 pb-1">Menu</a>
+            <a href="#" class="hover:text-slate-900 transition-colors">Informasi</a>
+            <a href="#" class="hover:text-slate-900 transition-colors">Bantuan</a>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="openCheckout()"
+                class="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-full text-sm font-bold shadow-lg transition-transform active:scale-95">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                <span id="cartCount" class="bg-blue-600 px-1.5 rounded-md text-[10px]">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="sidebarContainer" class="fixed inset-0 z-[200] hidden">
+        <div onclick="toggleSidebar(false)" id="sidebarOverlay"
+            class="absolute inset-0 bg-slate-950/40 backdrop-blur-sm opacity-0 transition-opacity"></div>
+
+        <div id="mobileSidebar"
+            class="absolute left-0 top-0 bottom-0 w-[80%] max-w-sm bg-white shadow-2xl transform -translate-x-full flex flex-col">
+            <div class="p-8 border-b border-slate-50 flex justify-between items-center">
+                <h2 class="serif text-2xl font-bold italic">Atelier <span class="text-blue-600">Apex</span></h2>
+                <button onclick="toggleSidebar(false)" class="p-2 bg-slate-50 rounded-full"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
+
+            <div class="p-8 space-y-8 flex-1">
+                <div class="space-y-6">
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Main Menu</p>
+                    <a href="#" onclick="toggleSidebar(false)" class="flex items-center gap-4 text-lg font-bold text-slate-900 group">
+    <div class="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+        <i data-lucide="utensils" class="w-5 h-5"></i>
+    </div>
+    Daftar Menu
+</a>
+                    <a href="#" class="flex items-center gap-4 text-lg font-bold text-slate-900 group">
+                        <div
+                            class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all">
+                            <i data-lucide="info" class="w-5 h-5"></i></div>
+                        Informasi
+                    </a>
+                    <a href="#" class="flex items-center gap-4 text-lg font-bold text-slate-900 group">
+                        <div
+                            class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all">
+                            <i data-lucide="help-circle" class="w-5 h-5"></i></div>
+                        Bantuan
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-8 border-t border-slate-50 bg-slate-50/50">
+                <div class="flex items-center gap-3 mb-4">
+                    <img src="https://ui-avatars.com/api/?name=User&background=cbd5e1&color=64748b"
+                        class="w-10 h-10 rounded-full border-2 border-white shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold text-slate-800" id="sidebarUser">Guest Customer</p>
+                        <p class="text-[10px] text-slate-400 font-medium" id="sidebarMejaInfo">Table --</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header
+        class="relative h-[25vh] lg:h-[35vh] overflow-hidden flex items-center justify-center text-center p-6 bg-slate-900">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600"
+            class="absolute inset-0 w-full h-full object-cover opacity-50">
+        <div class="relative z-10 max-w-2xl">
+            <h2 class="serif text-3xl lg:text-5xl text-white mb-4 animate-fade italic">A Masterpiece in Every Sip</h2>
+            <p class="text-slate-200 text-xs lg:text-sm font-light tracking-wide max-w-md mx-auto opacity-80">Nikmati
+                kurasi menu terbaik kami yang dirancang khusus untuk Anda.</p>
         </div>
     </header>
 
-    <div
-        class="sticky top-[65px] z-30 bg-white border-b border-slate-100 overflow-x-auto hide-scrollbar flex gap-2 p-3">
-        <button class="active-category px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap">Semua</button>
-        <button
-            class="bg-slate-100 text-slate-600 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap">Coffee</button>
-        <button
-            class="bg-slate-100 text-slate-600 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap">Non-Coffee</button>
-        <button
-            class="bg-slate-100 text-slate-600 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap">Pastry</button>
+    <section class="sticky-cat max-w-7xl mx-auto px-4 lg:px-12 -mt-8">
+    <div class="bg-white/95 backdrop-blur shadow-xl shadow-slate-200/50 rounded-3xl p-3 flex gap-3 overflow-x-auto hide-scrollbar border border-white">
+        <button onclick="filterMenu('Semua')"
+            class="cat-btn active px-8 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all uppercase tracking-widest">Semua</button>
+        <button onclick="filterMenu('Coffee')"
+            class="cat-btn bg-slate-50 text-slate-500 px-8 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all uppercase tracking-widest">Coffee</button>
+        <button onclick="filterMenu('Tea')"
+            class="cat-btn bg-slate-50 text-slate-500 px-8 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all uppercase tracking-widest">Tea</button>
+        <button onclick="filterMenu('Pastry')"
+            class="cat-btn bg-slate-50 text-slate-500 px-8 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all uppercase tracking-widest">Pastry</button>
+        <button onclick="filterMenu('Dining')"
+            class="cat-btn bg-slate-50 text-slate-500 px-8 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all uppercase tracking-widest">Dining</button>
     </div>
+</section>
 
-    <main class="p-4 grid grid-cols-1 gap-4" id="menuGrid">
+    <main class="max-w-7xl mx-auto p-4 lg:p-12 min-h-screen">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" id="menuGrid">
+        </div>
     </main>
 
-    <div id="cartBar"
-        class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] transform translate-y-full transition-transform duration-300 z-50">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex flex-col">
-                <span class="text-[10px] font-bold text-slate-400 uppercase">Total Pesanan</span>
-                <span class="text-lg font-black text-blue-600" id="cartTotal">IDR 0</span>
-            </div>
-            <button onclick="openCheckout()"
-                class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
-                Lanjut Checkout <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </button>
+    <div id="checkoutModal" class="fixed inset-0 z-[300] hidden">
+        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity" onclick="closeCheckout()">
         </div>
-    </div>
-
-    <div id="checkoutModal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeCheckout()"></div>
-        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-6 max-h-[90vh] overflow-y-auto">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
-
-            <h2 class="serif text-2xl font-bold mb-2 text-center">Konfirmasi Pesanan</h2>
-            <p class="text-center text-xs text-slate-400 mb-6">Pastikan pesanan Anda sudah sesuai</p>
-
-            <div class="mb-6">
-                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Nama Pemesan
-                    *</label>
-                <input type="text" id="customerName" placeholder="Contoh: Budi"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+        <div
+            class="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-2xl flex flex-col transform transition-transform duration-500 ease-out">
+            <div
+                class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <h2 class="serif text-2xl font-bold">Pesanan Anda</h2>
+                <button onclick="closeCheckout()" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
 
-            <div id="checkoutItems" class="space-y-4 mb-6">
+            <div class="flex-1 overflow-y-auto p-6 lg:p-8 hide-scrollbar">
+                <div class="mb-6 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">Nama
+                        Pelanggan</label>
+                    <div class="relative">
+                        <i data-lucide="user"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="customerName" placeholder="Tulis nama Anda..."
+                            class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                    </div>
+                </div>
+                <div class="space-y-4" id="checkoutItems"></div>
             </div>
 
-            <div class="bg-slate-50 rounded-2xl p-4 space-y-2 mb-8">
-                <div class="flex justify-between text-xs text-slate-500"><span>Subtotal</span><span id="checkSub">IDR
-                        0</span></div>
-                <div class="flex justify-between text-xs text-slate-500"><span>Biaya Layanan (5%)</span><span
-                        id="checkService">IDR 0</span></div>
-                <div class="flex justify-between text-xs text-slate-500"><span>PPN (10%)</span><span id="checkTax">IDR
-                        0</span></div>
-                <div class="flex justify-between font-bold text-blue-600 border-t pt-2 mt-2"><span>Total
-                        Akhir</span><span id="checkTotal">IDR 0</span></div>
+            <div class="p-6 bg-slate-50/80 border-t border-slate-100 sticky bottom-0">
+                <div class="space-y-1.5 mb-5 px-1">
+                    <div class="flex justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                        <span>Subtotal</span>
+                        <span id="checkSub" class="text-slate-600 font-black">IDR 0</span>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                        <span>Tax & Service (15%)</span>
+                        <span id="checkTax" class="text-slate-600 font-black">IDR 0</span>
+                    </div>
+                    <div
+                        class="flex justify-between items-center text-lg font-black text-slate-900 pt-3 border-t border-slate-200/60 mt-2">
+                        <span class="serif italic">Grand Total</span>
+                        <span id="checkTotal" class="text-blue-600">IDR 0</span>
+                    </div>
+                </div>
+                <button onclick="prosesBayar()"
+                    class="w-full bg-slate-900 hover:bg-blue-600 text-white py-4 rounded-xl font-bold text-sm shadow-xl transition-all flex items-center justify-center gap-3 active:scale-[0.98]">
+                    Konfirmasi Pembayaran <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
             </div>
-
-            <button onclick="prosesBayar()"
-                class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-100">
-                Bayar Sekarang
-            </button>
         </div>
     </div>
 
     <script>
-        // FIREBASE CONFIG (Sesuai Dashboard Kasir Anda)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCQuohmYq7Q_eR7OpfjrVgdRitOgqcX2GY",
-            authDomain: "cafe-order-system-f7024.firebaseapp.com",
-            projectId: "cafe-order-system-f7024",
-            storageBucket: "cafe-order-system-f7024.firebasestorage.app",
-            messagingSenderId: "903604964032",
-            appId: "1:903604964032:web:ab5c8efd4acf36b4943b25",
-            databaseURL: "https://cafe-order-system-f7024-default-rtdb.firebaseio.com"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    const firebaseConfig = {
+        apiKey: "AIzaSyCQuohmYq7Q_eR7OpfjrVgdRitOgqcX2GY",
+        authDomain: "cafe-order-system-f7024.firebaseapp.com",
+        projectId: "cafe-order-system-f7024",
+        storageBucket: "cafe-order-system-f7024.firebasestorage.app",
+        messagingSenderId: "903604964032",
+        appId: "1:903604964032:web:ab5c8efd4acf36b4943b25",
+        databaseURL: "https://cafe-order-system-f7024-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        let mejaAktif = null;
-        let cart = [];
+    let mejaAktif = null;
+    let cart = [];
+    let currentCategory = 'Semua'; 
 
-        // Data Menu (Bisa disamakan dengan index.html)
-        const menuItems = [
-            { id: 101, name: "Signature Latte", price: 35000, category: "Coffee", image: "https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=400" },
-            { id: 102, name: "Iced Americano", price: 28000, category: "Coffee", image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400" },
-            { id: 201, name: "Matcha Glaze Pastry", price: 32000, category: "Pastry", image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400" }
-        ];
+    const menuItems = [
+        { id: 101, name: "Signature Blue Latte", price: 42000, category: "Coffee", desc: "Espresso with organic butterfly pea floral milk", image: "https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=600" },
+        { id: 102, name: "Himalayan Pink Salt Coffee", price: 38000, category: "Coffee", desc: "Smooth cream with a hint of mountain minerals", image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=600" },
+        { id: 401, name: "Royal Earl Grey", price: 30000, category: "Tea", desc: "Premium black tea infused with bergamot orange", image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=600" }, // Item Tea Baru
+        { id: 201, name: "Matcha Glazed Croissant", price: 35000, category: "Pastry", desc: "Flaky texture with premium Kyoto matcha glaze", image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600" },
+        { id: 301, name: "Sparkling Lavender Lemonade", price: 32000, category: "Non-Coffee", desc: "Infused lavender flowers with fresh Sicilian lemon", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600" }
+    ];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const mejaUrl = params.get('meja');
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const mejaUrl = params.get('meja');
+        if (mejaUrl) {
+            mejaAktif = mejaUrl;
+            document.getElementById('displayMeja').textContent = `Executive Table ${mejaUrl}`;
+            document.getElementById('sidebarMejaInfo').textContent = `Executive Table ${mejaUrl}`;
+        }
+        renderMenu(); 
+        lucide.createIcons();
+    });
 
-            if (mejaUrl) {
-                mejaAktif = mejaUrl;
-                document.getElementById('displayMeja').textContent = `Meja ${mejaUrl}`;
-            } else {
-                alert("QR Code tidak valid. Silakan scan ulang di meja Anda.");
-            }
+    function toggleSidebar(open) {
+    const container = document.getElementById('sidebarContainer');
+    const overlay = document.getElementById('sidebarOverlay');
+    const sidebar = document.getElementById('mobileSidebar');
+    const body = document.body; // Referensi ke elemen body
 
-            renderMenu();
-            lucide.createIcons();
-        });
+    if (open) {
+        container.classList.remove('hidden');
+        body.classList.add('no-scroll'); // Aktifkan scroll lock
+        
+        setTimeout(() => {
+            overlay.classList.add('opacity-100');
+            sidebar.classList.remove('-translate-x-full');
+        }, 10);
+    } else {
+        overlay.classList.remove('opacity-100');
+        sidebar.classList.add('-translate-x-full');
+        body.classList.remove('no-scroll'); // Matikan scroll lock
+        
+        setTimeout(() => {
+            container.classList.add('hidden');
+        }, 400);
+    }
+}
 
-        function renderMenu() {
-            const grid = document.getElementById('menuGrid');
-            grid.innerHTML = menuItems.map(item => `
-                <div class="bg-white rounded-[2rem] p-4 flex gap-4 border border-slate-100">
-                    <img src="${item.image}" class="w-24 h-24 rounded-2xl object-cover">
-                    <div class="flex-1 flex flex-col justify-between py-1">
-                        <div>
-                            <h3 class="font-bold text-sm text-slate-800">${item.name}</h3>
-                            <p class="text-blue-600 font-black text-sm mt-1">IDR ${item.price.toLocaleString()}</p>
-                        </div>
-                        <div class="flex items-center justify-end gap-3">
-                            <button onclick="updateQty(${item.id}, -1)" class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                            <span id="qty-${item.id}" class="font-bold text-sm">0</span>
-                            <button onclick="updateQty(${item.id}, 1)" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"><i data-lucide="plus" class="w-4 h-4"></i></button>
+    function renderMenu() {
+        const grid = document.getElementById('menuGrid');
+        let filterTarget = currentCategory;
+        
+        // Logika agar tombol 'Dining' mengambil kategori 'Non-Coffee' di database/array
+        if(currentCategory === 'Dining') filterTarget = 'Non-Coffee';
+
+        const filteredItems = filterTarget === 'Semua' 
+            ? menuItems 
+            : menuItems.filter(i => i.category === filterTarget);
+
+        grid.innerHTML = filteredItems.map(item => {
+            const cartItem = cart.find(c => c.id === item.id);
+            const currentQty = cartItem ? cartItem.qty : 0;
+
+            return `
+            <div class="menu-card bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm animate-fade">
+                <div class="h-60 overflow-hidden relative group">
+                    <img src="${item.image}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase text-blue-600">
+                        ${item.category === 'Non-Coffee' ? 'Dining' : item.category}
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="serif text-lg font-bold text-slate-900 mb-1">${item.name}</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mb-4 line-clamp-2">${item.desc}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-base font-black text-slate-900">IDR ${item.price.toLocaleString()}</span>
+                        <div class="flex items-center bg-slate-50 p-1 rounded-xl gap-2.5 border border-slate-100">
+                            <button onclick="updateQty(${item.id}, -1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-slate-400 hover:text-red-500 shadow-sm transition-colors active:scale-90"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
+                            <span id="qty-grid-${item.id}" class="text-xs font-bold w-3 text-center">${currentQty}</span>
+                            <button onclick="updateQty(${item.id}, 1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-900 text-white shadow-md active:scale-90 transition-transform"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </div>
                 </div>
-            `).join('');
-            lucide.createIcons();
-        }
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
 
-        function updateQty(id, change) {
-            const item = menuItems.find(i => i.id === id);
-            const cartItem = cart.find(i => i.id === id);
+    function filterMenu(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => {
+            b.classList.remove('active');
+            b.classList.add('bg-slate-50', 'text-slate-500');
+        });
+        event.currentTarget.classList.add('active');
+        event.currentTarget.classList.remove('bg-slate-50', 'text-slate-500');
+        renderMenu();
+    }
 
-            if (cartItem) {
-                cartItem.qty += change;
-                if (cartItem.qty <= 0) cart = cart.filter(i => i.id !== id);
-            } else if (change > 0) {
-                cart.push({ ...item, qty: 1 });
+    function updateQty(id, change) {
+        const item = menuItems.find(i => i.id === id);
+        let cartItem = cart.find(i => i.id === id);
+        
+        if (cartItem) {
+            cartItem.qty += change;
+            if (cartItem.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+                cartItem.qty = 0;
             }
-
-            document.getElementById(`qty-${id}`).textContent = cart.find(i => i.id === id)?.qty || 0;
-            updateCartBar();
+        } else if (change > 0) {
+            cartItem = { ...item, qty: 1 };
+            cart.push(cartItem);
         }
-
-        function updateCartBar() {
-            const bar = document.getElementById('cartBar');
-            const total = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-
-            if (cart.length > 0) {
-                bar.classList.remove('translate-y-full');
-                document.getElementById('cartTotal').textContent = `IDR ${total.toLocaleString()}`;
+        
+        document.getElementById('cartCount').textContent = cart.reduce((a, b) => a + b.qty, 0);
+        
+        const qtyDisplay = document.getElementById(`qty-grid-${id}`);
+        if (qtyDisplay) {
+            qtyDisplay.textContent = cartItem ? cartItem.qty : 0;
+        }
+        
+        if(!document.getElementById('checkoutModal').classList.contains('hidden')) {
+            if (cart.length === 0) {
+                closeCheckout();
             } else {
-                bar.classList.add('translate-y-full');
+                openCheckout();
             }
         }
+    }
 
-        function openCheckout() {
-            const modal = document.getElementById('checkoutModal');
-            modal.classList.remove('hidden');
+    function removeItem(id) {
+        cart = cart.filter(i => i.id !== id);
+        document.getElementById('cartCount').textContent = cart.reduce((a, b) => a + b.qty, 0);
+        
+        const qtyDisplay = document.getElementById(`qty-grid-${id}`);
+        if (qtyDisplay) qtyDisplay.textContent = 0;
 
-            const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-            const service = Math.round(subtotal * 0.05);
-            const tax = Math.round(subtotal * 0.10);
-            const total = subtotal + service + tax;
+        if (cart.length === 0) closeCheckout(); else openCheckout();
+    }
 
-            document.getElementById('checkSub').textContent = `IDR ${subtotal.toLocaleString()}`;
-            document.getElementById('checkService').textContent = `IDR ${service.toLocaleString()}`;
-            document.getElementById('checkTax').textContent = `IDR ${tax.toLocaleString()}`;
-            document.getElementById('checkTotal').textContent = `IDR ${total.toLocaleString()}`;
-
-            document.getElementById('checkoutItems').innerHTML = cart.map(i => `
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-slate-600 font-medium">${i.qty}x ${i.name}</span>
-                    <span class="font-bold">IDR ${(i.price * i.qty).toLocaleString()}</span>
+    function openCheckout() {
+        if (cart.length === 0) return;
+        document.getElementById('checkoutModal').classList.remove('hidden');
+        
+        const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+        const serviceTax = Math.round(subtotal * 0.15);
+        const total = subtotal + serviceTax;
+        
+        document.getElementById('checkSub').textContent = `IDR ${subtotal.toLocaleString()}`;
+        document.getElementById('checkTax').textContent = `IDR ${serviceTax.toLocaleString()}`;
+        document.getElementById('checkTotal').textContent = `IDR ${total.toLocaleString()}`;
+        
+        document.getElementById('checkoutItems').innerHTML = cart.map(i => `
+            <div class="flex gap-4 items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm animate-fade">
+                <img src="${i.image}" class="w-16 h-16 rounded-xl object-cover shadow-sm">
+                <div class="flex-1">
+                    <h4 class="text-[14px] font-bold text-slate-800 mb-0.5">${i.name}</h4>
+                    <p class="text-[11px] text-blue-600 font-bold">IDR ${i.price.toLocaleString()}</p>
                 </div>
-            `).join('');
-        }
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center bg-slate-100 p-1 rounded-xl gap-2 border border-slate-200">
+                        <button onclick="updateQty(${i.id}, -1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-slate-400 hover:text-red-500 shadow-sm transition-all active:scale-90">
+                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <span class="text-xs font-bold w-4 text-center text-slate-900">${i.qty}</span>
+                        <button onclick="updateQty(${i.id}, 1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm transition-all active:scale-90">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                    <button onclick="removeItem(${i.id})" class="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300">
+                        <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
 
-        function closeCheckout() {
-            document.getElementById('checkoutModal').classList.add('hidden');
-        }
+    function closeCheckout() { document.getElementById('checkoutModal').classList.add('hidden'); }
 
-        async function prosesBayar() {
-            const nameInput = document.getElementById('customerName').value.trim();
-            if (!nameInput) return alert("Mohon masukkan nama Anda");
-            if (!mejaAktif) return alert("Nomor meja tidak terdeteksi");
+    async function prosesBayar() {
+        const name = document.getElementById('customerName').value.trim();
+        if (!name) return alert("Mohon masukkan nama Anda.");
+        if (!mejaAktif) return alert("Nomor meja tidak ditemukan.");
+        
+        const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+        const total = Math.round(subtotal * 1.15);
+        
+        try {
+            await db.ref('tables/' + mejaAktif).update({
+                status: 'occupied',
+                orderDetail: { items: cart, total: total, customerName: name, time: new Date().toLocaleTimeString('id-ID') }
+            });
+            const res = await fetch("/.netlify/functions/createTransaction", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items: cart, total: total, customerName: name })
+            });
+            const data = await res.json();
+            if (data.token) snap.pay(data.token, { onSuccess: () => location.reload() });
+        } catch (err) { alert("Error memproses pembayaran."); }
+    }
+</script>
 
-            const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-            const total = subtotal + Math.round(subtotal * 0.05) + Math.round(subtotal * 0.10);
-
-            // 1. Simpan ke Firebase
-            try {
-                await db.ref('tables/' + mejaAktif).update({
-                    status: 'occupied',
-                    orderDetail: {
-                        items: cart,
-                        total: total,
-                        time: new Date().toLocaleTimeString('id-ID'),
-                        customerName: nameInput
-                    }
-                });
-            } catch (err) { console.error(err); }
-
-            // 2. Midtrans
-            try {
-                const res = await fetch("/.netlify/functions/createTransaction", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ items: cart, total: total, customerName: nameInput })
-                });
-
-                const data = await res.json();
-                snap.pay(data.token, {
-                    onSuccess: () => location.reload(),
-                    onPending: () => location.reload()
-                });
-            } catch (error) {
-                alert("Gagal memproses pembayaran. Hubungi kasir.");
-            }
-        }
-    </script>
 </body>
 
 </html>
