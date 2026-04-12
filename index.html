@@ -426,30 +426,63 @@
         function closeCheckout() { document.getElementById('checkoutModal').classList.add('hidden'); }
 
         async function prosesBayar() {
-            const name = document.getElementById('customerName').value.trim();
-            if (!name) return alert("Mohon masukkan nama Anda.");
-            if (!mejaAktif) return alert("Nomor meja tidak ditemukan.");
+    const name = document.getElementById('customerName').value.trim();
+    if (!name) return alert("Mohon masukkan nama Anda.");
+    if (!mejaAktif) return alert("Nomor meja tidak ditemukan.");
 
-            const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-            const total = Math.round(subtotal * 1.15);
+    const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+    const total = Math.round(subtotal * 1.15);
 
-            try {
-                // Update Firebase untuk notifikasi pesanan masuk
-                await db.ref('tables/' + mejaAktif).update({
-                    status: 'occupied',
-                    orderDetail: { items: cart, total: total, customerName: name, time: new Date().toLocaleTimeString('id-ID') }
-                });
+    try {
+        // 1. Ambil Token Transaksi dari Backend (Netlify)
+        const res = await fetch("/.netlify/functions/createTransaction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: cart, total: total, customerName: name, table: mejaAktif })
+        });
+        
+        const data = await res.json();
+        
+        if (data.token) {
+            // 2. Jalankan Midtrans Snap
+            snap.pay(data.token, {
+                onSuccess: async function(result) {
+                    // --- PINDAHKAN LOGIKA FIREBASE KE SINI ---
+                    // Pesanan baru dikirim ke kasir setelah bayar lunas
+                    const orderId = Date.now(); // ID unik sederhana
 
-                // Hit Midtrans Serverless Function (Netlify)
-                const res = await fetch("/.netlify/functions/createTransaction", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ items: cart, total: total, customerName: name, table: mejaAktif })
-                });
-                const data = await res.json();
-                if (data.token) snap.pay(data.token, { onSuccess: () => location.reload() });
-            } catch (err) { alert("Error memproses pembayaran."); }
+await db.ref('tables/' + mejaAktif + '/orders/' + orderId).set({
+    items: cart,
+    total: total,
+    customerName: name,
+    time: new Date().toLocaleTimeString('id-ID'),
+    status: 'paid'
+});
+
+// tetap tandai meja aktif (optional)
+await db.ref('tables/' + mejaAktif).update({
+    status: 'occupied'
+});
+                    
+                    alert("Pembayaran berhasil! Pesanan Anda sedang diproses.");
+                    location.reload(); 
+                },
+                onPending: function(result) {
+                    alert("Menunggu pembayaran Anda.");
+                },
+                onError: function(result) {
+                    alert("Pembayaran gagal.");
+                },
+                onClose: function() {
+                    alert('Anda menutup layar pembayaran sebelum selesai.');
+                }
+            });
         }
+    } catch (err) { 
+        alert("Error memproses transaksi."); 
+    }
+}
+
     </script>
 </body>
 

@@ -89,6 +89,24 @@
                 class="sidebar-link text-slate-500 w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium">
                 <i data-lucide="package" class="w-5 h-5"></i> Atur Menu
             </button>
+
+            <button onclick="switchTab('inventory')" id="btn-inventory"
+                class="sidebar-link text-slate-500 w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium">
+                <i data-lucide="boxes" class="w-5 h-5"></i> Cek Stok Cepat
+            </button>
+
+            <button onclick="switchTab('analytics')" id="btn-analytics"
+                class="sidebar-link text-slate-500 w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Laporan Ringkas
+            </button>
+
+            <div class="pt-4 mt-4 border-t border-slate-100">
+                <p class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sistem</p>
+                <button onclick="switchTab('settings')" id="btn-settings"
+                    class="sidebar-link text-slate-500 w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium">
+                    <i data-lucide="settings" class="w-5 h-5"></i> Pengaturan
+                </button>
+            </div>
         </nav>
 
         <div class="p-4 border-t border-slate-100">
@@ -105,10 +123,19 @@
                 <h1 id="page-title" class="text-xl font-bold text-slate-900">Monitoring Meja</h1>
                 <p class="text-xs text-slate-500 mt-1" id="liveClock">Memuat waktu...</p>
             </div>
-            <button onclick="resetSemuaMeja()"
-                class="text-xs font-bold text-red-500 border border-red-100 px-4 py-2 rounded-xl hover:bg-red-50 transition-all uppercase tracking-tighter">
-                Reset Semua Meja
-            </button>
+
+            <div class="flex items-center gap-4">
+                <div id="connectionStatus"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-100">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span class="text-[10px] font-bold text-green-600 uppercase">Sistem Online</span>
+                </div>
+
+
+                <button onclick="resetSemuaMeja()"
+                    class="text-xs font-bold text-red-500 border border-red-100 px-4 py-2 rounded-xl hover:bg-red-50 transition-all uppercase tracking-tighter">
+                    Reset Semua Meja
+                </button>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
@@ -190,6 +217,17 @@
                     </table>
                 </div>
             </div>
+
+            <div id="tab-inventory" class="tab-content">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Kontrol Stok Cepat</h3>
+        <div class="text-[10px] text-slate-400 font-bold uppercase">Realtime Firebase Sync</div>
+    </div>
+
+    <div id="quickStockList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
+
+
         </div>
     </main>
 
@@ -326,7 +364,10 @@
             dashboard: 'Monitoring Meja',
             orders: 'Pesanan Masuk',
             history: 'Riwayat Transaksi',
-            management: 'Manajemen Menu'
+            management: 'Manajemen Menu',
+            inventory: 'Cek Stok Cepat',
+            analytics: 'Laporan Ringkas',
+            settings: 'Pengaturan'
         };
 
         function switchTab(tabName) {
@@ -441,7 +482,12 @@
             });
             const today = new Date().toLocaleDateString('en-CA');
             db.ref('history/' + today).on('value', (snapshot) => { renderHistory(snapshot.val()); });
-            db.ref('products').on('value', (snapshot) => { renderManajemenMenu(snapshot.val()); });
+
+           db.ref('products').on('value', (snapshot) => {
+    const products = snapshot.val();
+    renderManajemenMenu(products);
+    renderQuickStock(products);
+});
         }
 
         function playNotif() { document.getElementById('notifSound').play().catch(e => console.log("Audio blocked")); }
@@ -550,20 +596,76 @@
                         </button>
                     </td>
                     <td class="p-4 text-right">
-                        <button onclick="openModalEdit('${key}', '${item.nama}', '${item.kategori}', ${item.harga}, '${item.gambar}')" class="text-slate-300 hover:text-blue-600">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i>
-                        </button>
-                    </td>
+    <div class="flex justify-end gap-3">
+        <button onclick="openModalEdit('${key}', '${item.nama}', '${item.kategori}', ${item.harga}, '${item.gambar}')"
+            class="text-slate-300 hover:text-blue-600">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+        </button>
+
+        <button onclick="hapusProduk('${key}')"
+            class="text-slate-300 hover:text-red-600">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+    </div>
+</td>
                 </tr>`;
             });
             list.innerHTML = html;
             lucide.createIcons();
         }
 
+
+        function renderQuickStock(data) {
+    const list = document.getElementById('quickStockList');
+    if (!list) return;
+
+    if (!data) {
+        list.innerHTML = '<div class="text-slate-400 italic">Belum ada produk.</div>';
+        return;
+    }
+
+    let html = '';
+
+    Object.entries(data).forEach(([key, item]) => {
+        const available = item.stok === 'available';
+
+        html += `
+        <div class="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-sm">
+            <div class="flex items-center gap-3 mb-4">
+                <img src="${item.gambar}" class="w-14 h-14 rounded-xl object-cover bg-slate-100">
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800">${item.nama}</h4>
+                    <p class="text-[10px] uppercase font-black text-slate-400">${item.kategori}</p>
+                </div>
+            </div>
+
+            <button onclick="toggleStok('${key}', '${item.stok}')"
+                class="w-full py-3 rounded-xl text-[10px] font-black uppercase ${available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                ${available ? 'Tersedia' : 'Sold Out'}
+            </button>
+        </div>`;
+    });
+
+    list.innerHTML = html;
+}
+
         async function toggleStok(key, currentStatus) {
             const newStatus = currentStatus === 'available' ? 'soldout' : 'available';
             await db.ref(`products/${key}`).update({ stok: newStatus });
         }
+
+        async function hapusProduk(key) {
+    if (confirm('Yakin ingin menghapus produk ini dari semua sistem?')) {
+        await db.ref(`products/${key}`).remove();
+        alert('Produk berhasil dihapus.');
+    }
+}
+
+        async function hapusMenu(key) {
+    if (confirm('Hapus menu ini dari semua sistem?')) {
+        await db.ref(`products/${key}`).remove();
+    }
+}
 
         async function voidTransaksi(key) {
             if (confirm('Batalkan transaksi ini?')) {

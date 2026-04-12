@@ -143,6 +143,7 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
             </header>
 
             <div id="mobileNav" class="lg:hidden flex gap-2 overflow-x-auto p-4 bg-slate-100 hide-scroll"></div>
+            
             <section id="menuGrid"
                 class="flex-1 overflow-y-auto p-5 lg:p-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 hide-scroll">
             </section>
@@ -164,13 +165,13 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
 
         <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-4 hide-scroll"></div>
 
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
+        
     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Nama Pemesan *</label>
-    <input type="text" id="customerName" placeholder="Masukkan nama Anda..." 
-        class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
-        required>
+    <input type="text" id="customerName"
+class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs">
 </div>
-<div class="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
+
+<div class="sticky bottom-0 bg-white border-t border-slate-200 p-4 space-y-3 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]"></div>
 
         <div class="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
             <div class="rounded-2xl bg-white p-3 border border-slate-100 text-xs space-y-1.5">
@@ -186,13 +187,12 @@ data-client-key="Mid-client-C18PvX12qvdRKwbI"></script>
     </aside>
 
     <script>
-        const categories = ['Coffee', 'Tea', 'Pastry', 'Dining'];
 
         const CATEGORY_ICONS = {
-    Coffee: "coffee",
-    Tea: "cup-soda",
-    Pastry: "cake-slice",
-    Dining: "utensils"
+    Coffee: "cup-soda",
+    Tea: "leaf",
+    Pastry: "croissant",
+    Dining: "utensils-crossed"
 };
 
 
@@ -221,6 +221,32 @@ function watchTables() {
     });
 }
 
+
+function watchProducts() {
+    db.ref('products').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+
+        DB_MENU = Object.entries(data)
+            .filter(([_, item]) => item.stok === 'available')
+            .map(([key, item], index) => ({
+                id: key,
+                category: item.kategori,
+                name: item.nama,
+                price: item.harga,
+                img: item.gambar
+            }));
+
+        categories = [...new Set(DB_MENU.map(item => item.category))];
+
+        if (!categories.includes(activeCategory)) {
+            activeCategory = categories[0] || '';
+        }
+
+        renderNav();
+        renderMenu();
+    });
+}
+
 // Fungsi render meja yang sudah dimodifikasi
 function renderTableGrid(tableData) {
     const grid = document.getElementById('tableGrid');
@@ -245,48 +271,9 @@ function renderTableGrid(tableData) {
 }
 
 
-        const DB_MENU = [
-            { id: 1, category: 'Coffee', name: 'Manuka Honey Latte', price: 62000, img: 'gambar/coffee/manuka-honey-latte.webp' },
-            { id: 2, category: 'Coffee', name: 'Signature Cold Brew', price: 58000, img: 'gambar/coffee/signature-cold-brew.webp' },
-            { id: 3, category: 'Coffee', name: 'Spanish Latte', price: 54000, img: 'gambar/coffee/spanish-latte.webp' },
-            { id: 4, category: 'Coffee', name: 'Americano', price: 42000, img: 'gambar/coffee/americano.webp' },
-            { id: 5, category: 'Coffee', name: 'Cappuccino', price: 50000, img: 'gambar/coffee/cappuccino.webp' },
-            { id: 6, category: 'Coffee', name: 'Mocha', price: 52000, img: 'gambar/coffee/mocha.webp' },
-            { id: 7, category: 'Coffee', name: 'Flat White', price: 49000, img: 'gambar/coffee/flat-white.webp' },
-            { id: 8, category: 'Coffee', name: 'Vanilla Latte', price: 56000, img: 'gambar/coffee/vanilla-latte.webp' },
-            { id: 9, category: 'Coffee', name: 'Hazelnut Latte', price: 57000, img: 'gambar/coffee/hazelnut-latte.webp' },
-            { id: 10, category: 'Coffee', name: 'Affogato', price: 60000, img: 'gambar/coffee/affogato.webp' },
-            { id: 11, category: 'Tea', name: 'Imperial Jasmine', price: 48000, img: 'gambar/tea/imperial-jasmine.webp' },
-            { id: 12, category: 'Tea', name: 'Earl Grey', price: 45000, img: 'gambar/tea/earl-grey.webp' },
-            { id: 13, category: 'Tea', name: 'Chamomile', price: 43000, img: 'gambar/tea/chamomile.webp' },
-            { id: 14, category: 'Tea', name: 'Matcha', price: 55000, img: 'gambar/tea/matcha.webp' },
-            { id: 15, category: 'Tea', name: 'Lemon Tea', price: 40000, img: 'gambar/tea/lemon-tea.webp' },
-            { id: 16, category: 'Tea', name: 'Peach Tea', price: 42000, img: 'gambar/tea/peach-tea.webp' },
-            { id: 17, category: 'Tea', name: 'Lychee Tea', price: 44000, img: 'gambar/tea/lychee-tea.webp' },
-            { id: 18, category: 'Tea', name: 'Mint Tea', price: 41000, img: 'gambar/tea/mint-tea.webp' },
-            { id: 19, category: 'Tea', name: 'Milk Tea', price: 46000, img: 'gambar/tea/milk-tea.webp' },
-            { id: 20, category: 'Tea', name: 'Thai Tea', price: 47000, img: 'gambar/tea/thai-tea.webp' },
-            { id: 21, category: 'Pastry', name: 'Butter Croissant', price: 38000, img: 'gambar/pastry/butter-croissant.webp' },
-            { id: 22, category: 'Pastry', name: 'Chocolate Croissant', price: 42000, img: 'gambar/pastry/chocolate-croissant.webp' },
-            { id: 23, category: 'Pastry', name: 'Almond Danish', price: 45000, img: 'gambar/pastry/almond-danish.webp' },
-            { id: 24, category: 'Pastry', name: 'Cinnamon Roll', price: 43000, img: 'gambar/pastry/cinnamon-roll.webp' },
-            { id: 25, category: 'Pastry', name: 'Blueberry Muffin', price: 39000, img: 'gambar/pastry/blueberry-muffin.webp' },
-            { id: 26, category: 'Pastry', name: 'Cheese Cake', price: 48000, img: 'gambar/pastry/cheese-cake.webp' },
-            { id: 27, category: 'Pastry', name: 'Banana Bread', price: 37000, img: 'gambar/pastry/banana-bread.webp' },
-            { id: 28, category: 'Pastry', name: 'Red Velvet', price: 50000, img: 'gambar/pastry/red-velvet.webp' },
-            { id: 29, category: 'Pastry', name: 'Macaron Box', price: 52000, img: 'gambar/pastry/macaron-box.webp' },
-            { id: 30, category: 'Pastry', name: 'Tiramisu', price: 55000, img: 'gambar/pastry/tiramisu.webp' },
-            { id: 31, category: 'Dining', name: 'Salmon Grill', price: 145000, img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=500&q=80' },
-            { id: 32, category: 'Dining', name: 'Beef Steak', price: 175000, img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80' },
-            { id: 33, category: 'Dining', name: 'Chicken Katsu', price: 98000, img: 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=500&q=80' },
-            { id: 34, category: 'Dining', name: 'Creamy Pasta', price: 92000, img: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=500&q=80' },
-            { id: 35, category: 'Dining', name: 'Burger Deluxe', price: 89000, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80' },
-            { id: 36, category: 'Dining', name: 'Fish & Chips', price: 102000, img: 'https://images.unsplash.com/photo-1579208575657-c595a05383b7?w=500&q=80' },
-            { id: 37, category: 'Dining', name: 'Caesar Salad', price: 76000, img: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=500&q=80' },
-            { id: 38, category: 'Dining', name: 'Sushi Platter', price: 132000, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&q=80' },
-            { id: 39, category: 'Dining', name: 'Ramen Bowl', price: 85000, img: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=500&q=80' },
-            { id: 40, category: 'Dining', name: 'Pizza Slice', price: 95000, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80' }
-        ];
+        let categories = [];
+        let DB_MENU = [];
+        
 
         let activeCategory = 'Coffee';
         let cart = JSON.parse(localStorage.getItem('atelier_cart') || '[]');
@@ -372,24 +359,35 @@ function startOrder() {
         }
 
         function renderMenu() {
-            const q = getSearch();
-            const items = DB_MENU.filter(i => i.category === activeCategory && i.name.toLowerCase().includes(q));
-            const grid = document.getElementById('menuGrid');
-            document.getElementById('categoryTitle').textContent = activeCategory;
-            grid.innerHTML = items.map(item => `<div class='menu-card bg-white rounded-3xl p-4 border border-slate-100'>
-    <img src='${item.img}' class='w-full aspect-[16/10] object-cover rounded-2xl'>
-    <h4 class='font-bold mt-4'>${item.name}</h4>
-    <p class='text-blue-600 text-sm font-bold mt-1'>IDR ${item.price.toLocaleString('id-ID')}</p>
-    <div class='mt-4 flex items-center justify-between gap-3'>
-      <div class='flex items-center gap-2'>
-        <button onclick='changeMenuQty(${item.id},-1)' class='w-9 h-9 rounded-xl bg-slate-100 font-bold'>-</button>
-        <span id='menu-qty-${item.id}' class='min-w-[24px] text-center font-bold text-sm'>0</span>
-        <button onclick='changeMenuQty(${item.id},1)' class='w-9 h-9 rounded-xl bg-slate-100 font-bold'>+</button>
-      </div>
-      <button onclick='addToCart(${item.id})' class='flex-1 py-3 rounded-2xl bg-slate-900 text-white text-sm font-semibold'>Tambah</button>
-    </div>
-  </div>`).join('') || `<div class='text-slate-400'>Menu tidak ditemukan.</div>`;
-        }
+    const q = getSearch();
+
+    const items = DB_MENU.filter(i =>
+        i.category === activeCategory &&
+        i.name.toLowerCase().includes(q)
+    );
+
+    const grid = document.getElementById('menuGrid');
+    document.getElementById('categoryTitle').textContent = activeCategory || 'Menu';
+
+    grid.innerHTML = items.map(item => `
+        <div class='menu-card bg-white rounded-3xl p-4 border border-slate-100'>
+            <img src='${item.img}' class='w-full aspect-[16/10] object-cover rounded-2xl'>
+            <h4 class='font-bold mt-4'>${item.name}</h4>
+            <p class='text-blue-600 text-sm font-bold mt-1'>
+                IDR ${Number(item.price).toLocaleString('id-ID')}
+            </p>
+            <div class='mt-4 flex items-center justify-between gap-3'>
+                <div class='flex items-center gap-2'>
+                    <button onclick='changeMenuQty("${item.id}",-1)' class='w-9 h-9 rounded-xl bg-slate-100 font-bold'>-</button>
+                    <span id='menu-qty-${item.id}' class='min-w-[24px] text-center font-bold text-sm'>0</span>
+                    <button onclick='changeMenuQty("${item.id}",1)' class='w-9 h-9 rounded-xl bg-slate-100 font-bold'>+</button>
+                </div>
+                <button onclick='addToCart("${item.id}")' class='flex-1 py-3 rounded-2xl bg-slate-900 text-white text-sm font-semibold'>Tambah</button>
+            </div>
+        </div>
+    `).join('') || `<div class='text-slate-400'>Menu tidak ditemukan.</div>`;
+}
+
 
         function changeMenuQty(id, delta) {
             const el = document.getElementById(`menu-qty-${id}`);
@@ -453,7 +451,8 @@ function startOrder() {
     </div>
     <div class='flex items-center gap-2 shrink-0'>
       <p class='font-bold text-xs min-w-[90px] text-right'>IDR ${(i.price * i.qty).toLocaleString('id-ID')}</p>
-      <button onclick='removeItem(${i.id})' class='flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl shadow-sm'>
+      <button onclick='removeItem("${i.id}")' 
+class='flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl shadow-sm'>
         <i data-lucide='trash-2' class='w-4 h-4'></i>
       </button>
     </div>
@@ -477,13 +476,12 @@ function startOrder() {
         document.getElementById('searchDesktop').addEventListener('input', renderMenu);
         document.getElementById('searchMobile').addEventListener('input', renderMenu);
 
-        document.addEventListener('DOMContentLoaded', () => {
+       document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('tableOverlay');
     if (overlay) overlay.classList.remove('hidden');
-    
-    watchTables(); // Ganti initTables() lama dengan ini
-    renderNav();
-    renderMenu();
+
+    watchTables();
+    watchProducts(); // 🔥 WAJIB
     updateCart();
     lucide.createIcons();
 });
