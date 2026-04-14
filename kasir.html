@@ -160,44 +160,43 @@
                 <div id="orderList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
-            <div id="tab-history" class="tab-content">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-4">
-                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Riwayat Hari Ini</h3>
-                        <button onclick="toggleVoidDisplay()" id="btnToggleVoid"
-                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold uppercase tracking-tighter hover:bg-slate-50">
-                            <i data-lucide="eye-off" class="w-3 h-3"></i> Tampilkan Void
-                        </button>
-                    </div>
-                    <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 text-right">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase block">Total Omzet</span>
-                        <span id="totalOmzet" class="text-lg font-black text-blue-600">Rp0</span>
-                    </div>
-                </div>
-                <div class="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 border-b border-slate-100">
-                            <tr>
-                                <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu
-                                </th>
-                                <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Meja
-                                </th>
-                                <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    Pelanggan</th>
-                                <th
-                                    class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
-                                    Total</th>
-                                <th
-                                    class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
-                                    Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyList"></tbody>
-                    </table>
-                    <div id="historyEmpty" class="hidden p-20 text-center text-slate-400 italic text-sm">Belum ada
-                        transaksi selesai.</div>
-                </div>
+            <div id="tab-history" class="tab-content hidden animate-fade">
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h2 class="serif text-3xl font-bold text-slate-900">Riwayat Transaksi</h2>
+            <p class="text-slate-500 text-sm mt-1">Data penjualan tersimpan berdasarkan tanggal.</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2 gap-2 shadow-sm focus-within:border-slate-900 transition-all">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                <input type="text" id="searchHistory" oninput="filterHistoryLocal()" placeholder="Cari nama pelanggan..." class="text-xs font-bold outline-none bg-transparent w-40">
             </div>
+
+            <div class="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2 gap-2 shadow-sm">
+                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                <input type="date" id="historyDateFilter" onchange="loadHistoryByDate()" class="text-xs font-bold outline-none bg-transparent">
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 border-b border-slate-100">
+                <tr>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Detail Pesanan</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="historyList">
+                </tbody>
+        </table>
+    </div>
+</div>
+
 
             <div id="tab-management" class="tab-content">
                 <div class="flex justify-between items-center mb-8">
@@ -429,56 +428,106 @@
 
 <!---- STRUK RECEIPT ----->
     <div id="printReceipt" class="hidden">
-    <div style="width: 80mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; padding: 5px;">
-        <div style="text-align: center; margin-bottom: 10px;">
-            <h2 style="margin: 0; font-size: 18px;">ATELIER APEX</h2>
-            <p style="margin: 2px 0;">Semarang, Central Java</p>
-            <p style="margin: 2px 0;">--------------------------------</p>
-        </div>
-        
-        <div style="margin-bottom: 10px;">
-            <p id="rcp-info" style="margin: 2px 0;"></p>
-            <p id="rcp-waiter" style="margin: 2px 0;">Kasir: Admin Atelier</p>
-            <p style="margin: 2px 0;">--------------------------------</p>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <h2 class="brand">ATELIER APEX</h2>
+            <p class="address">Semarang, Central Java</p>
+            <p class="contact">WA: 0812-3456-7890</p>
         </div>
 
-        <table style="width: 100%; border-collapse: collapse;">
+        <div class="divider">********************************</div>
+
+        <div class="receipt-info">
+            <div class="info-row">
+                <span>Waktu</span>
+                <span id="rcp-info-time"></span>
+            </div>
+            <div class="info-row">
+                <span>Pelanggan</span>
+                <span id="rcp-info-cust" style="font-weight: bold;"></span>
+            </div>
+            <div class="info-row">
+                <span>Meja</span>
+                <span id="rcp-info-table"></span>
+            </div>
+            <div class="info-row">
+                <span>Kasir</span>
+                <span>Admin Atelier</span>
+            </div>
+        </div>
+
+        <div class="divider">--------------------------------</div>
+
+        <table class="receipt-table">
             <tbody id="rcp-items">
                 </tbody>
         </table>
 
-        <div style="margin-top: 10px;">
-            <p style="margin: 2px 0;">--------------------------------</p>
-            <div style="display: flex; justify-content: space-between;">
-                <span>TOTAL:</span>
-                <span id="rcp-total" style="font-weight: bold;"></span>
+        <div class="divider">--------------------------------</div>
+
+        <div class="receipt-total">
+            <div class="total-row">
+                <span>SUBTOTAL</span>
+                <span id="rcp-subtotal"></span>
             </div>
-            <p style="margin: 2px 0;">--------------------------------</p>
+            <div class="total-row main-total">
+                <span>TOTAL</span>
+                <span id="rcp-total"></span>
+            </div>
         </div>
 
-        <div style="text-align: center; margin-top: 15px;">
-            <p style="margin: 2px 0;">Terima Kasih Atas Kunjungan Anda</p>
-            <p style="margin: 2px 0; font-size: 10px;">*Simpan struk ini sebagai bukti bayar*</p>
+        <div class="divider">********************************</div>
+
+        <div class="receipt-footer">
+            <p>Terima Kasih Atas Kunjungan Anda</p>
+            <p>IG: @atelier.apex</p>
+            <p class="note">Barang yang sudah dibeli tidak dapat ditukar</p>
         </div>
     </div>
 </div>
 
 <style>
-    /* CSS agar struk tidak tampil di layar tapi tampil saat print */
     @media print {
-        /* Sembunyikan semua elemen dashboard */
         body * { visibility: hidden; }
-        /* Tampilkan hanya area struk */
-        #printReceipt, #printReceipt * { 
-            visibility: visible; 
-            display: block !important;
-        }
+        #printReceipt, #printReceipt * { visibility: visible; }
         #printReceipt { 
             position: absolute; 
             left: 0; 
             top: 0; 
-            width: 80mm; /* Sesuaikan ukuran kertas printer Anda */
+            width: 58mm; /* Lebar standar printer thermal */
+            padding: 0;
+            margin: 0;
+            background: white;
         }
+
+        .receipt-container {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: black;
+            padding: 5px;
+        }
+
+        .receipt-header { text-align: center; margin-bottom: 5px; }
+        .receipt-header .brand { font-size: 16px; font-weight: 900; margin: 0; letter-spacing: 1px; }
+        .receipt-header p { margin: 2px 0; font-size: 10px; }
+
+        .divider { text-align: center; margin: 5px 0; font-weight: bold; }
+
+        .receipt-info { margin-bottom: 5px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+
+        .receipt-table { width: 100%; border-collapse: collapse; }
+        .receipt-table td { padding: 3px 0; vertical-align: top; }
+        .item-name { display: block; font-weight: bold; }
+        .item-detail { font-size: 10px; color: #333; }
+
+        .receipt-total { margin-top: 5px; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .main-total { font-size: 14px; font-weight: 900; margin-top: 5px; border-top: 1px dashed black; padding-top: 5px; }
+
+        .receipt-footer { text-align: center; margin-top: 15px; font-size: 9px; }
+        .receipt-footer p { margin: 2px 0; }
+        .note { margin-top: 5px !important; font-style: italic; }
     }
 </style>
 
@@ -527,27 +576,31 @@
         function reprintReceipt(order) {
     if (!order) return;
 
-    // 1. Isi Data ke Area Struk Tersembunyi
-    document.getElementById('rcp-info').innerHTML = `
-        Tgl: ${new Date().toLocaleDateString('id-ID')}<br>
-        Jam: ${order.completedAt || order.time}<br>
-        Meja: ${order.meja} | Cust: ${order.customerName}<br>
-        [SALINAN STRUK]
-    `;
+    // Isi Info Header
+    document.getElementById('rcp-info-time').textContent = order.completedAt || new Date().toLocaleTimeString('id-ID');
+    document.getElementById('rcp-info-cust').textContent = order.customerName;
+    document.getElementById('rcp-info-table').textContent = `#${order.meja}`;
 
+    // Isi Daftar Item
     let itemHtml = '';
     order.items.forEach(item => {
         itemHtml += `
             <tr>
-                <td style="padding: 4px 0; font-size: 11px;">${item.name} x${item.qty}</td>
-                <td style="text-align: right; font-size: 11px;">${(item.price * item.qty).toLocaleString()}</td>
+                <td>
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-detail">${item.qty} x ${item.price.toLocaleString()}</span>
+                </td>
+                <td style="text-align: right; font-weight: bold;">
+                    ${(item.price * item.qty).toLocaleString()}
+                </td>
             </tr>
         `;
     });
+    
     document.getElementById('rcp-items').innerHTML = itemHtml;
+    document.getElementById('rcp-subtotal').textContent = order.total.toLocaleString();
     document.getElementById('rcp-total').textContent = `IDR ${order.total.toLocaleString()}`;
 
-    // 2. Jalankan Print
     window.print();
 }
 
@@ -1080,6 +1133,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toLocaleDateString('en-CA');
     document.getElementById('filterDate').value = today;
     loadAnalyticsByDate(); // Jalankan sekali untuk set judul awal
+});
+
+
+
+let currentHistoryData = {}; // Simpan data sementara untuk fitur pencarian cepat
+
+// 1. Fungsi muat data berdasarkan tanggal
+async function loadHistoryByDate() {
+    const selectedDate = document.getElementById('historyDateFilter').value;
+    if (!selectedDate) return;
+
+    // Menampilkan loading state sederhana
+    document.getElementById('historyList').innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 italic">Mengambil data...</td></tr>';
+
+    db.ref('history/' + selectedDate).once('value', (snapshot) => {
+        currentHistoryData = snapshot.val() || {};
+        renderHistory(currentHistoryData);
+    });
+}
+
+// 2. Fungsi pencarian lokal (agar tidak berat ke database)
+function filterHistoryLocal() {
+    const keyword = document.getElementById('searchHistory').value.toLowerCase();
+    const filtered = {};
+    
+    Object.entries(currentHistoryData).forEach(([id, order]) => {
+        if (order.customerName.toLowerCase().includes(keyword) || order.meja.toString().includes(keyword)) {
+            filtered[id] = order;
+        }
+    });
+    
+    renderHistory(filtered);
+}
+
+// 3. Update Inisialisasi (Pastikan ini ada di dalam DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toLocaleDateString('en-CA');
+    const hDate = document.getElementById('historyDateFilter');
+    if (hDate) {
+        hDate.value = today;
+        loadHistoryByDate();
+    }
 });
 
 
